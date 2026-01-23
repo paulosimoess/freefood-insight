@@ -4,7 +4,6 @@
   let error = "";
   let data = null;
 
-  // define no ui/.env se o backend estiver noutra porta
   const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
   function onFileChange(e) {
@@ -44,6 +43,9 @@
       loading = false;
     }
   }
+
+  const DEFAULT_FORMULA =
+    "(kcal_100g/100) × grams_est × confidence, onde grams_est = portion_ratio × grams_per_plate";
 </script>
 
 <main class="min-h-screen flex items-center justify-center px-6 py-10">
@@ -51,7 +53,7 @@
     <div class="text-center space-y-2">
       <h1 class="text-3xl font-bold">Contador de Calorias</h1>
       <p class="text-muted-foreground">
-        Upload de imagem → deteção → calorias estimadas (kcal_base × confidence).
+        Upload de imagem → deteção → estimativa por porção (área no prato).
       </p>
     </div>
 
@@ -79,7 +81,7 @@
               Total: <span class="font-bold">{data.calories?.total ?? 0}</span> kcal
             </div>
             <div class="text-sm text-muted-foreground">
-              {data.calories?.formula ?? "kcal_base * confidence"}
+              {data.calories?.formula ?? DEFAULT_FORMULA}
             </div>
           </div>
 
@@ -88,15 +90,20 @@
 
             {#if (data.calories?.items?.length ?? 0) === 0}
               <p class="text-sm text-muted-foreground">
-                Nenhum alimento configurado (confere o calorie_map.json).
+                Nenhum alimento estimado (confere se o alimento tem kcal no calorie_map.json e se foi detetado).
               </p>
             {:else}
               <ul class="space-y-2">
                 {#each data.calories.items as it}
                   <li class="flex flex-col sm:flex-row sm:justify-between gap-1">
                     <span class="font-medium">{it.label_name}</span>
+
                     <span class="text-sm text-muted-foreground">
-                      conf: {(it.confidence * 100).toFixed(1)}% · base: {it.kcal_base} · kcal: <b>{it.kcal_estimated}</b>
+                      conf: {(it.confidence * 100).toFixed(1)}%
+                      · porção: {(it.portion_ratio * 100).toFixed(1)}%
+                      · g: {it.grams_est}
+                      · kcal/100g: {it.kcal_per_100g}
+                      · kcal: <b>{it.kcal_estimated}</b>
                     </span>
                   </li>
                 {/each}

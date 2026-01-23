@@ -103,7 +103,12 @@ async def detect_calories(file: UploadFile = File(...)):
     if isinstance(payload, JSONResponse):
         return payload
 
-    cal_items, cal_total = estimate_calories_from_objects(detected_objects)
+    cal_items, cal_total = estimate_calories_from_objects(
+    detected_objects,
+    plate_area=payload["plate_area"],
+    garbage_area=payload["garbage_area"],
+    grams_per_plate=500.0,
+    )
     payload["calories"] = {
         "items": cal_items,
         "total": cal_total,
