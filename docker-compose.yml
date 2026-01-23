@@ -8,3 +8,5 @@ services:
     build: ./restapi
     ports:
       - "8000:8000"
+    volumes:
+      - ./restapi:/app

@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes import index
 from routes.api import detect
 
+from calorie_estimator import estimate_calories_from_objects
+
 app = FastAPI()
 
 # Configure CORS

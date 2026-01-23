@@ -20,7 +20,7 @@ class YOLOModel:
         try:
             print("Predicting...")
             with torch.no_grad():
-                results = self.model(frame)
+                results = self.model(frame, conf=0.20, iou=0.45)
             detected_objects = []
             for result in results:
                 for i, (mask, box) in enumerate(zip(result.masks.data, result.boxes)):
