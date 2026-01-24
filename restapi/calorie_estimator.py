@@ -4,6 +4,14 @@ from typing import Dict, Any, List, Tuple
 
 NON_FOOD = {"plate", "knife", "fork", "spoon", "bowl", "cup"}
 
+# Correções manuais (prioridade máxima) para evitar valores absurdos do CSV (ex: arroz cru)
+OVERRIDES_KCAL_100G = {
+    "rice": 130.0,
+    "strawberry": 32.0,
+    "vegetables": 35.0,
+    "soup": 60.0,
+}
+
 def load_kcal_base() -> Dict[str, float]:
     here = os.path.dirname(__file__)
     path = os.path.join(here, "calorie_map.json")
@@ -41,7 +49,7 @@ def estimate_calories_from_objects(
         if not name or name in NON_FOOD:
             continue
 
-        kcal_100g = float(kcal_base.get(name, 0.0))
+        kcal_100g = OVERRIDES_KCAL_100G.get(name, kcal_base.get(name, 0.0))
         if kcal_100g <= 0 or area <= 0:
             # sem kcal definida ou sem área -> não estima
             continue
