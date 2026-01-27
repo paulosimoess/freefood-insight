@@ -96,6 +96,16 @@ async def detect_calories(file: UploadFile = File(...)):
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     detected_objects, results = yolo_model.predict(image)
 
+    print("DEBUG YOLO detected_objects:")
+    for o in detected_objects:
+        print({
+            "label_name": o.get("label_name"),
+            "confidence": o.get("confidence"),
+            "area": o.get("area"),
+            "label": o.get("label"),
+            "bbox": o.get("bbox")  # se existir
+        })
+
     if results is None:
         return JSONResponse(content={"error": "Error in object detection"}, status_code=500)
 
@@ -112,7 +122,7 @@ async def detect_calories(file: UploadFile = File(...)):
     payload["calories"] = {
         "items": cal_items,
         "total": cal_total,
-        "formula": "kcal_base * confidence",
+        "formula": "(kcal_100g/100)*grams_est"
     }
 
     return JSONResponse(content=payload)
