@@ -166,7 +166,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div class="w-full">
             <label for="image-upload" class="block text-sm font-semibold mb-1">
-              <span class="text-red-700">Imagem</span> (.jpg, .jpeg, .png, .avif)
+              <span class="text-red-700">Imagem</span> (.jpg, .jpeg, .png, .webp, .avif)
             </label>
             <input
               id="image-upload"
@@ -185,7 +185,7 @@
             disabled={loading || !file}
             type="button"
           >
-            {loading ? "A calcular..." : "Calcular"}
+            Calcular
           </button>
         </div>
 
@@ -261,7 +261,7 @@
 
             {#if (data.calories?.items?.length ?? 0) === 0}
               <p class="text-sm text-zinc-400">
-                Nenhum alimento estimado (confere se foi detetado e se existe no calorie_map.json).
+                Nenhum alimento estimado.
               </p>
             {:else}
               <ul class="space-y-2">
