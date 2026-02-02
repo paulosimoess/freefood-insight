@@ -5,63 +5,134 @@ from PIL import Image
 import io
 import base64
 
-from calorie_estimator import estimate_calories_from_objects
+from calorie_estimator import (
+    estimate_calories_from_objects,
+    compute_food_area_union,
+)
 
 router = APIRouter()
 yolo_model = YOLOModel()
 
 
-def generate_clustering_image(result):
-    clustering_image_array = result.plot(boxes=False, labels=True, color_mode="class")
-    clustering_image = Image.fromarray(clustering_image_array)
-    return clustering_image
+def pil_to_base64_jpeg(img: Image.Image, quality: int = 90) -> str:
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality)
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
+def generate_detection_image(result) -> Image.Image:
+    # imagem com boxes/labels (deteções normais)
+    arr = result.plot()  # default: boxes=True
+    return Image.fromarray(arr)
+
+
+def generate_clustering_image(result) -> Image.Image:
+    # “clustering” (sem boxes, só labels/cores por classe)
+    arr = result.plot(boxes=False, labels=True, color_mode="class")
+    return Image.fromarray(arr)
+
+
+# helpers desperdicio
+def _bbox_area(bb) -> float:
+    x1, y1, x2, y2 = bb
+    return max(0.0, float(x2) - float(x1)) * max(0.0, float(y2) - float(y1))
+
+
+def _clip_bbox(bb, clip_bb):
+    x1, y1, x2, y2 = map(float, bb)
+    cx1, cy1, cx2, cy2 = map(float, clip_bb)
+    nx1, ny1 = max(x1, cx1), max(y1, cy1)
+    nx2, ny2 = min(x2, cx2), min(y2, cy2)
+    if nx2 <= nx1 or ny2 <= ny1:
+        return None
+    return [nx1, ny1, nx2, ny2]
+
+
+def _union_area(rects) -> float:
+    """
+    Área da união de retângulos axis-aligned (bboxes).
+    Algoritmo por varrimento em x (suficiente para o teu caso).
+    """
+    if not rects:
+        return 0.0
+
+    xs = sorted({r[0] for r in rects} | {r[2] for r in rects})
+    total = 0.0
+
+    for i in range(len(xs) - 1):
+        x_left, x_right = xs[i], xs[i + 1]
+        if x_right <= x_left:
+            continue
+
+        ys = []
+        for x1, y1, x2, y2 in rects:
+            if x1 <= x_left and x2 >= x_right:
+                ys.append((y1, y2))
+
+        if not ys:
+            continue
+
+        ys.sort()
+        cur_s, cur_e = ys[0]
+        merged = 0.0
+
+        for s, e in ys[1:]:
+            if s <= cur_e:
+                cur_e = max(cur_e, e)
+            else:
+                merged += max(0.0, cur_e - cur_s)
+                cur_s, cur_e = s, e
+
+        merged += max(0.0, cur_e - cur_s)
+        total += (x_right - x_left) * merged
+
+    return float(total)
 
 
 def build_response(detected_objects, results):
-    # Save temporary image with detections
-    output_image_path = "output_image.jpg"
-    results[0].save(output_image_path)
+    # Base64 (sem escrever ficheiros temporários)
+    det_img = generate_detection_image(results[0])
+    clustering_img = generate_clustering_image(results[0])
 
-    # Save temporary clustering image
-    clustering_image_path = "clustering_image.jpg"
-    clustering_image = generate_clustering_image(results[0])
-    clustering_image.save(clustering_image_path)
+    base64_image = pil_to_base64_jpeg(det_img)
+    base64_clustering_image = pil_to_base64_jpeg(clustering_img)
 
-    # Convert images to base64
-    with open(output_image_path, "rb") as image_file:
-        base64_image = base64.b64encode(image_file.read()).decode("utf-8")
-
-    with open(clustering_image_path, "rb") as image_file:
-        base64_clustering_image = base64.b64encode(image_file.read()).decode("utf-8")
-
-    # Calculate waste percentage
     garbage_classes = {35.0}
     ignore_classes = {58.0, 31.0, 42.0, 70.0, 83.0, 25.0, 27.0, 22.0, 11.0, 8.0}
-    plate_area = 0
-    garbage_area = 0
-    food_area = 0
+
+    plate_bbox = None
+    plate_bbox_area = 0.0
 
     for obj in detected_objects:
-        if obj["label"] == 58.0:
-            plate_area += obj["area"]
+        if obj.get("label") == 58.0 and obj.get("bbox"):
+            a = _bbox_area(obj["bbox"])
+            if a > plate_bbox_area:
+                plate_bbox_area = a
+                plate_bbox = obj["bbox"]
 
-        if obj["label"] in garbage_classes:
-            garbage_area += obj["area"]
+    if not plate_bbox or plate_bbox_area <= 0:
+        return JSONResponse(content={"error": "No plate detected in the image"}, status_code=400)
 
-        if obj["label"] not in garbage_classes and obj["label"] not in ignore_classes:
-            food_area += obj["area"]
+    food_area = float(compute_food_area_union(detected_objects, crop_to_plate=True))
 
-    if plate_area == 0:
-        return JSONResponse(
-            content={"error": "No plate detected in the image"}, status_code=400
-        )
+    # garbage_area por união de bbox (crop ao prato)
+    garbage_rects = []
+    for obj in detected_objects:
+        bb = obj.get("bbox")
+        if not bb:
+            continue
+        lab = obj.get("label")
+        if lab in garbage_classes:
+            bb2 = _clip_bbox(bb, plate_bbox)
+            if bb2:
+                garbage_rects.append(bb2)
 
-    if plate_area > garbage_area:
-        waste_percentage = (food_area / (plate_area - garbage_area)) * 100
-    else:
-        waste_percentage = 0
+    garbage_area = float(_union_area(garbage_rects))
 
-    waste_percentage = min(max(waste_percentage, 0), 100)
+    plate_area = float(plate_bbox_area)
+    denom = max(1.0, plate_area - garbage_area)
+    waste_percentage = (food_area / denom) * 100.0
+    waste_percentage = min(max(waste_percentage, 0.0), 100.0)
 
     return {
         "objects": detected_objects,
@@ -71,6 +142,13 @@ def build_response(detected_objects, results):
         "food_area": food_area,
         "garbage_area": garbage_area,
         "plate_area": plate_area,
+        "food_area_method": "bbox_union_crop_to_plate",
+        "waste_debug": {
+            "plate_bbox_area": plate_area,
+            "food_union_area": food_area,
+            "garbage_union_area": garbage_area,
+            "denom": denom,
+        },
     }
 
 
@@ -78,12 +156,9 @@ def build_response(detected_objects, results):
 async def detect_objects(file: UploadFile = File(...)):
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
     detected_objects, results = yolo_model.predict(image)
-    if detected_objects is None:
-        return JSONResponse(content={"error": "Error in object detection"}, status_code=500)
-
-
-    if results is None:
+    if detected_objects is None or results is None:
         return JSONResponse(content={"error": "Error in object detection"}, status_code=500)
 
     payload = build_response(detected_objects, results)
@@ -97,10 +172,10 @@ async def detect_objects(file: UploadFile = File(...)):
 async def detect_calories(file: UploadFile = File(...)):
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    detected_objects, results = yolo_model.predict(image)
-    if detected_objects is None:
-        return JSONResponse(content={"error": "Error in object detection"}, status_code=500)
 
+    detected_objects, results = yolo_model.predict(image)
+    if detected_objects is None or results is None:
+        return JSONResponse(content={"error": "Error in object detection"}, status_code=500)
 
     print("DEBUG YOLO detected_objects:")
     for o in detected_objects:
@@ -109,22 +184,20 @@ async def detect_calories(file: UploadFile = File(...)):
             "confidence": o.get("confidence"),
             "area": o.get("area"),
             "label": o.get("label"),
-            "bbox": o.get("bbox")  # se existir
+            "bbox": o.get("bbox"),
         })
-
-    if results is None:
-        return JSONResponse(content={"error": "Error in object detection"}, status_code=500)
 
     payload = build_response(detected_objects, results)
     if isinstance(payload, JSONResponse):
         return payload
 
     cal_items, cal_total = estimate_calories_from_objects(
-    detected_objects,
-    plate_area=payload["plate_area"],
-    garbage_area=payload["garbage_area"],
-    grams_per_plate=500.0,
+        detected_objects,
+        plate_area=payload["plate_area"],       
+        garbage_area=payload["garbage_area"],   # bbox union area
+        grams_per_plate=500.0,
     )
+
     payload["calories"] = {
         "items": cal_items,
         "total": cal_total,

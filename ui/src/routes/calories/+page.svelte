@@ -7,7 +7,6 @@
   let showImages = false;
   let showTech = false;
 
-  // Modal (ponto 3)
   let modalOpen = false;
   let modalSrc = "";
   let modalTitle = "";
@@ -18,6 +17,21 @@
     error = "";
     data = null;
     file = e.target.files?.[0] ?? null;
+  }
+
+  function friendlyError(msg) {
+    const m = (msg || "").toLowerCase();
+
+    if (m.includes("no plate detected")) {
+      return "Não foi possível detetar o prato. Tenta uma imagem com o prato mais visível.";
+    }
+    if (m.includes("error in object detection")) {
+      return "Ocorreu um erro na deteção. Tenta novamente (ou usa outra imagem).";
+    }
+    if (m.includes("http 413")) {
+      return "A imagem é demasiado grande. Tenta uma versão mais pequena.";
+    }
+    return msg || "Erro ao calcular.";
   }
 
   async function calculate() {
@@ -45,12 +59,10 @@
       }
 
       data = await res.json();
-
-      // opcional: fecha imagens abertas e modal ao fazer novo cálculo
       showImages = false;
       modalOpen = false;
     } catch (e) {
-      error = e?.message ?? "Erro ao calcular";
+      error = friendlyError(e?.message);
     } finally {
       loading = false;
     }
@@ -64,7 +76,7 @@
     }
   }
 
-  const CAL_FORMULA = "kcal = (kcal/100g) × (gramas_estimadas/100)";
+  const CAL_FORMULA = "kcal = (kcal/100g ÷ 100) × gramas_estimadas";
   const WASTE_FORMULA = "W = FoodArea / (PlateArea − GarbageArea) × 100";
 
   function openModal(title, base64) {
@@ -101,6 +113,9 @@
         <h1 class="text-2xl sm:text-3xl font-bold">Contador de Calorias</h1>
         <p class="text-sm text-zinc-400">
           Upload → deteção → estimativa por porção (área relativa no prato)
+        </p>
+        <p class="text-xs text-zinc-500 mt-1">
+          Nota: estes valores são estimativas aproximadas e dependem da deteção automática.
         </p>
       </div>
     </div>
@@ -205,7 +220,10 @@
         {/if}
 
         {#if error}
-          <p class="text-red-500">{error}</p>
+          <div class="rounded-xl border border-red-900/40 bg-red-900/10 p-4">
+          <div class="font-semibold text-red-400">Nenhum prato detetado</div>
+          <p class="text-sm text-red-200 mt-1">{error}</p>
+        </div>
         {/if}
 
         {#if data}
@@ -255,7 +273,7 @@
                 on:click={() => (showTech = !showTech)}
                 type="button"
               >
-                {showTech ? "Ocultar detalhes técnicos" : "Ver detalhes técnicos"}
+                {showTech ? "Ocultar detalhes" : "Ver detalhes"}
               </button>
             </div>
 
@@ -268,7 +286,12 @@
                 {#each data.calories.items as it}
                   <li class="border border-zinc-800 rounded-xl p-3 bg-zinc-950/20">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div class="font-semibold">{it.label_name}</div>
+                      <div class="font-semibold">
+                        {it.label_name}
+                        {#if it.count && it.count > 1}
+                          <span class="text-xs text-zinc-400"> (x{it.count})</span>
+                        {/if}
+                      </div>
 
                       <!-- ESSENCIAL -->
                       <div class="text-sm text-zinc-300 flex flex-wrap gap-x-3 gap-y-1">
@@ -333,7 +356,7 @@
 
   {#if modalOpen}
     <div class="fixed inset-0 z-50 bg-black/80 p-4">
-      <!-- Overlay clicável (interativo e acessível) -->
+      <!-- Overlay clicável -->
       <button
         type="button"
         class="absolute inset-0 w-full h-full cursor-default"
@@ -341,7 +364,6 @@
         on:click={closeModal}
       ></button>
 
-      <!-- Conteúdo do modal -->
       <div class="relative w-full h-full flex items-center justify-center">
         <div
           class="w-full max-w-6xl rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
