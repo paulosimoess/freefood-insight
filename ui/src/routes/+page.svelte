@@ -36,7 +36,7 @@
             <div>
               <div class="text-lg font-semibold">Desperdício Alimentar</div>
               <div class="text-zinc-400 text-sm mt-1">
-                Aceder à aplicação base de deteção e cálculo de waste (%).
+                Aceder à aplicação base de deteção e cálculo de desperdício (%).
               </div>
             </div>
             <span class="text-zinc-400 group-hover:text-red-700 transition">→</span>
@@ -51,7 +51,7 @@
             <div>
               <div class="text-lg font-semibold">Contador de Calorias</div>
               <div class="text-zinc-400 text-sm mt-1">
-                Nova aplicação para identificar alimento e estimar calorias.
+                Identificação de alimentos e estimativa de calorias com base na porção detatada detetada no prato.
               </div>
             </div>
             <span class="text-zinc-400 group-hover:text-red-700 transition">→</span>

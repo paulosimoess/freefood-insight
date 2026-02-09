@@ -21,7 +21,7 @@ OVERRIDES_KCAL_100G = {
     "strawberry": 32.0,
     "vegetables": 35.0,
     "soup": 60.0,
-    "chicken": 190.0,  # CSV tinha 462/100g -> absurdo
+    "chicken": 190.0,  
 }
 
 # Cortar falsos positivos por classe (confidence mínima)

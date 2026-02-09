@@ -28,9 +28,11 @@
     if (m.includes("error in object detection")) {
       return "Ocorreu um erro na deteção. Tenta novamente (ou usa outra imagem).";
     }
-    if (m.includes("http 413")) {
+
+    if (m.includes("erro http 413") || m.includes("http 413") || m.includes(" 413")) {
       return "A imagem é demasiado grande. Tenta uma versão mais pequena.";
     }
+
     return msg || "Erro ao calcular.";
   }
 
@@ -54,6 +56,11 @@
       });
 
       if (!res.ok) {
+        // ✅ melhor: trata 413 por status (mais fiável)
+        if (res.status === 413) {
+          throw new Error("Erro HTTP 413");
+        }
+
         const txt = await res.text();
         throw new Error(txt || `Erro HTTP ${res.status}`);
       }
@@ -220,10 +227,11 @@
         {/if}
 
         {#if error}
+          <!-- ✅ corrigido: título genérico para qualquer erro -->
           <div class="rounded-xl border border-red-900/40 bg-red-900/10 p-4">
-          <div class="font-semibold text-red-400">Nenhum prato detetado</div>
-          <p class="text-sm text-red-200 mt-1">{error}</p>
-        </div>
+            <div class="font-semibold text-red-400">Não foi possível calcular</div>
+            <p class="text-sm text-red-200 mt-1">{error}</p>
+          </div>
         {/if}
 
         {#if data}
