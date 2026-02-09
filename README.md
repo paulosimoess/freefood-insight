@@ -1,7 +1,33 @@
-# Food Waste Detection in Canteen Plates using YOLOv11
+# FreeFood Insight — Food Waste + Calorie Estimation (YOLO)
 
-This is the open-source code for the article [Food Waste Detection in Canteen Plates using YOLOv11](https://www.mdpi.com/2076-3417/15/13/7137) (Published in MDPI) wrote by the students João Ferreira and Paulino Cerqueira and the corresponding author Jorge Ribeiro.
-The three authors of this article are from the Polytechnic Institute of Viana do Castelo (https://www.ipvc.pt)
+This repository is based on the open-source code for the article
+[Food Waste Detection in Canteen Plates using YOLOv11](https://www.mdpi.com/2076-3417/15/13/7137) (MDPI),
+by João Ferreira, Paulino Cerqueira and the corresponding author Jorge Ribeiro (IPVC).
+
+In **Project III**, we extended the base project with a complete web interface (**FreeFood Insight**) and a
+**calorie estimation module** integrated in the backend API.
+
+---
+
+## What we added in this project
+
+### Web (FreeFood Insight)
+- Landing page + navigation
+- Waste module UI (existing)
+- **Calories module UI (added):** upload image → calories per item + total kcal
+
+### Backend (REST API)
+- Waste detection endpoint (existing): `POST /api/detect`
+- **Calories endpoint (added):** `POST /api/calories`
+  - Returns calories per item and total
+  - Robustness features:
+    - NON_FOOD filtering (plate, fork, knife, garbage, etc.)
+    - deduplication by IoU (with fallback by similar area when bbox is missing)
+    - aggregation by label (e.g., `stewed veal (x2)`)
+    - sanity limits (min confidence/area, min/max grams, max portion)
+  - Uses `calorie_map.json` (generated from model labels + nutrition table, with manual overrides)
+
+---
 
 ## Screenshots
 
@@ -10,17 +36,27 @@ Some screenshots of the App's interface:
 ![detection_example](https://github.com/user-attachments/assets/6b77c267-02c7-49f6-914a-4317b17ebe63)
 ![detection_formula](https://github.com/user-attachments/assets/11b04ed8-fd3d-4237-82f3-062bcd543cbc)
 
+> TODO: Add screenshots of the final Calories module (multi-food case + NON_FOOD edge case)
 
+---
 
 ## Documentation
-- All the documentation for the UI is [here](./ui/README.md)
-- All the documentation for the backend is [here](./restapi/README.md)
+- UI documentation: [./ui/README.md](./ui/README.md)
+- Backend documentation: [./restapi/README.md](./restapi/README.md)
+
+---
 
 ## Dataset
-The dataset for this project is also publicly available at: https://universe.roboflow.com/project-eyfif/proj3-food-waste-detection
+The dataset for this project is publicly available at:
+https://universe.roboflow.com/project-eyfif/proj3-food-waste-detection
+
+---
 
 ## Start the project
-To start the project, you need to have docker and docker-compose installed on your machine. Then, you can run the following command:
+
+### Requirements
+- Docker + Docker Compose
+
+### Run
 ```bash
 docker-compose up --build -d
-```

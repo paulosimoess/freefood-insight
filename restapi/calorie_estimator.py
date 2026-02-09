@@ -261,7 +261,7 @@ def compute_food_area_union(objects: List[Dict[str, Any]], crop_to_plate: bool =
     return union
 
 
-# ---------------- Regras de comida ----------------
+# Regras de comida 
 def _is_food_obj(obj: Dict[str, Any]) -> bool:
     """Só comida (para dedup e calorias)."""
     name = _alias_label(_norm_label(obj.get("label_name")))
@@ -294,7 +294,7 @@ def _same_mutex(a: str, b: str) -> bool:
     return False
 
 
-# ---------------- Dedup (IoU) ----------------
+# Dedup (IoU) 
 def _iou_xyxy(a: List[float], b: List[float]) -> float:
     ax1, ay1, ax2, ay2 = a
     bx1, by1, bx2, by2 = b
