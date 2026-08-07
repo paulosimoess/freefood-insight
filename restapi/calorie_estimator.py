@@ -90,7 +90,7 @@ FULL_PLATE_GRAMS = {
 }
 DEFAULT_FULL_PLATE_GRAMS = 400.0
 
-# ---------------- Logging ----------------
+# Logging 
 logger = logging.getLogger("calorie_estimator")
 
 def _setup_logging() -> None:
@@ -113,7 +113,7 @@ def _setup_logging() -> None:
 
 _setup_logging()
 
-# ---------------- Cache do calorie_map.json ----------------
+#  Cache do calorie_map.json 
 _KCAL_BASE_CACHE: Optional[Dict[str, float]] = None
 
 def load_kcal_base() -> Dict[str, float]:
@@ -132,7 +132,7 @@ def get_kcal_base() -> Dict[str, float]:
     return _KCAL_BASE_CACHE
 
 
-# ---------------- Normalizações ----------------
+# Normalizações 
 def _norm_conf(conf: Any) -> float:
     try:
         c = float(conf)
@@ -152,7 +152,7 @@ def _min_conf_for(name: str) -> float:
     return float(MIN_CONF_BY_CLASS.get(name, MIN_CONF))
 
 
-# ---------------- BBOX helpers (Opção B: union area) ----------------
+# BBOX helpers 
 def _has_valid_bbox(obj: Dict[str, Any]) -> bool:
     bb = obj.get("bbox")
     return (
@@ -231,7 +231,7 @@ def _get_plate_bbox(objects: List[Dict[str, Any]]) -> Optional[List[float]]:
 
 def compute_food_area_union(objects: List[Dict[str, Any]], crop_to_plate: bool = True) -> float:
     """
-    FoodArea (Opção B):
+    FoodArea:
     - usa união das bbox de comida para não somar overlaps duas vezes
     - opcional: recorta cada bbox ao bbox do prato (recomendado)
     """
@@ -423,7 +423,7 @@ def _dedup_food(objects: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return _dedup_food_by_similar_area(objects)
 
 
-# ---------------- Agregação e calorias ----------------
+# Agregação e calorias 
 def _aggregate_by_label(objects: List[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
     """
     Junta múltiplas deteções do mesmo label:

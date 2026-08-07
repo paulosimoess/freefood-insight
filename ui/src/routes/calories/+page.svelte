@@ -56,7 +56,7 @@
       });
 
       if (!res.ok) {
-        // ✅ melhor: trata 413 por status (mais fiável)
+        //  trata 413 por status 
         if (res.status === 413) {
           throw new Error("Erro HTTP 413");
         }
