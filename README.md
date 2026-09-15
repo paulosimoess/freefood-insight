@@ -1,4 +1,4 @@
-# FreeFood Insight — Food Waste + Calorie Estimation (YOLO)
+# FreeFood Insight — Food Waste & Calorie Estimation (YOLO)
 
 FreeFood Insight is an academic project focused on **food waste detection** and **calorie estimation** using YOLOv11.
 
@@ -29,7 +29,7 @@ POST /api/detect
 
 ### Calorie Estimation
 
-A new calorie estimation workflow was added to the project.
+We added a new calorie estimation workflow to the project.
 
 The user can upload an image and obtain:
 
@@ -54,7 +54,7 @@ The calorie estimation workflow includes:
 
 ---
 
-## What We Added
+## Our Contributions
 
 ### Web Interface — FreeFood Insight
 
@@ -88,21 +88,13 @@ Manual overrides were also applied to selected classes to avoid unrealistic valu
 
 ## Screenshots
 
-### Food Waste Detection
-
-![Food Waste Detection](https://github.com/user-attachments/assets/6b77c267-02c7-49f6-914a-4317b17ebe63)
-
-### Waste Calculation
-
-![Waste Calculation](https://github.com/user-attachments/assets/11b04ed8-fd3d-4237-82f3-062bcd543cbc)
-
 ### FreeFood Insight Interface
 
 ![FreeFood Insight](./assets/FreeFoodInsight.png)
 
-### Calorie Estimation
+### Food Waste Detection
 
-![Calorie Estimation](./assets/CalorieEstimation.png)
+![Food Waste Detection](https://github.com/user-attachments/assets/6b77c267-02c7-49f6-914a-4317b17ebe63)
 
 ### Calorie Estimation — Food Detected
 
@@ -157,6 +149,10 @@ This project extends the open-source implementation associated with:
 Research article:
 
 https://www.mdpi.com/2076-3417/15/13/7137
+
+Original repository:
+
+https://github.com/Xurape/Food-Waste-Detection-using-YOLOv11
 
 The original food waste detection functionality was used as the base of the project.  
 Our Project III work focused on extending it with the **FreeFood Insight web interface** and the **calorie estimation functionality**.
