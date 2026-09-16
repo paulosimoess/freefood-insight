@@ -55,6 +55,7 @@ The calorie estimation workflow includes:
 ---
 
 ## Our Contributions
+As part of Project III, we extended the original project with the following features:
 
 ### Web Interface — FreeFood Insight
 
